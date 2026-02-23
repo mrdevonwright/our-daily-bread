@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatNumber } from "@/lib/utils";
 import type { GlobalStats } from "@/lib/types";
@@ -36,28 +37,34 @@ interface TickerCardProps {
   label: string;
   prefix?: string;
   isCurrency?: boolean;
+  href?: string;
 }
 
-function TickerCard({ icon: Icon, value, label, prefix = "", isCurrency = false }: TickerCardProps) {
+function TickerCard({ icon: Icon, value, label, prefix = "", isCurrency = false, href }: TickerCardProps) {
   const animated = useCountUp(value);
 
   const formatted = isCurrency
     ? `$${formatNumber(animated)}`
     : `${prefix}${formatNumber(animated)}`;
 
-  return (
-    <div className="flex flex-col items-center text-center px-6 py-8 group">
+  const inner = (
+    <div className={`flex flex-col items-center text-center px-6 py-8 group ${href ? "cursor-pointer" : ""}`}>
       <div className="w-12 h-12 rounded-full bg-wheat/10 flex items-center justify-center mb-4 group-hover:bg-wheat/20 transition-colors">
         <Icon className="w-5 h-5 text-wheat" />
       </div>
       <div className="font-serif text-4xl md:text-5xl font-bold text-foreground tabular-nums mb-2">
         {formatted}
       </div>
-      <div className="text-sm text-muted-foreground uppercase tracking-wider font-medium">
+      <div className={`text-sm uppercase tracking-wider font-medium transition-colors ${href ? "text-muted-foreground group-hover:text-wheat" : "text-muted-foreground"}`}>
         {label}
       </div>
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{inner}</Link>;
+  }
+  return inner;
 }
 
 interface StatsTickerProps {
@@ -101,11 +108,13 @@ export function StatsTicker({ initialStats }: StatsTickerProps) {
             icon={Church}
             value={stats.total_churches}
             label="Churches"
+            href="/leaderboard"
           />
           <TickerCard
             icon={Users}
             value={stats.total_bakers}
             label="Bakers"
+            href="/social"
           />
           <TickerCard
             icon={Wheat}
