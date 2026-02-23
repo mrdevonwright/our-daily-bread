@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 const VENDOR_CATEGORIES = [
   {
+    id: "sourdough-essentials",
     title: "Sourdough Essentials",
     icon: FlameKindling,
     color: "text-wheat",
@@ -19,35 +20,36 @@ const VENDOR_CATEGORIES = [
     vendors: [
       {
         name: "King Arthur Baking",
-        tag: "Flour & supplies",
-        note: "The gold standard for bread flour. Their Sir Galahad flour is beloved by sourdough bakers.",
+        tag: "Flour & salt",
+        note: "The gold standard for bread flour and fine sea salt. Their organic all-purpose flour is exactly what this recipe calls for.",
         url: "https://www.kingarthurbaking.com/",
         cta: "Shop King Arthur →",
       },
       {
         name: "Cultures for Health",
         tag: "Sourdough starter",
-        note: "Reliable, shelf-stable sourdough starter cultures. Perfect for beginners. Ships everywhere.",
+        note: "Reliable, shelf-stable sourdough starter cultures. Perfect if you don't have a baker to share with you yet.",
         url: "https://www.culturesforhealth.com/",
         cta: "Get a Starter →",
       },
       {
-        name: "Breadtopia",
-        tag: "Bannetons & tools",
-        note: "Proofing baskets, lames (bread slashers), Dutch ovens, and more. Great starter kits.",
-        url: "https://breadtopia.com/",
-        cta: "Shop Breadtopia →",
+        name: "Sourdough Proofing Set (Etsy)",
+        tag: "Banneton, lame & tools",
+        note: "This is the exact kit we use — a wicker banneton, lame, dough scraper, and more. Everything in one box.",
+        url: "https://www.etsy.com/ca/listing/1761175253/sourdough-bread-proofing-set-wicker",
+        cta: "Get the Kit →",
       },
       {
         name: "Lodge Cast Iron",
         tag: "Dutch ovens",
-        note: "A 5-qt Dutch oven is the secret to a perfect crust. Lodge's are affordable and last forever.",
+        note: "A 5-qt Dutch oven is the secret to a perfect crust. You'll need two — one per loaf. Lodge's are affordable and last forever.",
         url: "https://www.lodgecastiron.com/",
         cta: "Shop Lodge →",
       },
     ],
   },
   {
+    id: "packaging",
     title: "Bread Bags & Packaging",
     icon: Package,
     color: "text-forest",
@@ -78,6 +80,7 @@ const VENDOR_CATEGORIES = [
     ],
   },
   {
+    id: "display",
     title: "Display & Setup",
     icon: ShoppingBag,
     color: "text-burgundy",
@@ -108,6 +111,7 @@ const VENDOR_CATEGORIES = [
     ],
   },
   {
+    id: "nice-to-haves",
     title: "Nice-to-Haves",
     icon: Sparkles,
     color: "text-wheat-dark",
@@ -221,7 +225,7 @@ export default function ResourcesPage() {
             {VENDOR_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
-                <div key={cat.title}>
+                <div key={cat.title} id={cat.id}>
                   <div className="flex items-center gap-3 mb-5">
                     <div className={`w-9 h-9 rounded-xl ${cat.bg} flex items-center justify-center`}>
                       <Icon className={`w-5 h-5 ${cat.color}`} />

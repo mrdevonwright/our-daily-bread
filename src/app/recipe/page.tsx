@@ -6,6 +6,7 @@ import {
   SELLING_TIPS,
 } from "@/lib/constants";
 import { CheckCircle2, Clock, ChefHat, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "The Sourdough Recipe",
@@ -39,7 +40,7 @@ export default function RecipePage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             {[
-              { icon: Clock, label: "Total Time", value: "~20 hours (mostly hands-off)" },
+              { icon: Clock, label: "Total Time", value: "18–24 hours (mostly hands-off)" },
               { icon: ChefHat, label: "Active Work", value: "~45 minutes" },
               { icon: CheckCircle2, label: "Skill Level", value: "Beginner-friendly" },
               { icon: TrendingUp, label: "Yield", value: "2 loaves (~900g each)" },
@@ -69,7 +70,16 @@ export default function RecipePage() {
                     key={ing.item}
                     className="flex items-start justify-between gap-4 pb-3 border-b border-cream last:border-0 last:pb-0"
                   >
-                    <span className="font-medium text-foreground text-sm">{ing.item}</span>
+                    {ing.link ? (
+                      <Link
+                        href={ing.link}
+                        className="font-medium text-wheat hover:underline text-sm"
+                      >
+                        {ing.item} →
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-foreground text-sm">{ing.item}</span>
+                    )}
                     <span className="text-muted-foreground text-sm text-right shrink-0">{ing.amount}</span>
                   </li>
                 ))}
@@ -82,21 +92,28 @@ export default function RecipePage() {
                 <span className="text-wheat">🍳</span> Equipment
               </h2>
               <ul className="space-y-2">
-                {RECIPE_EQUIPMENT.map((item) => (
+                {RECIPE_EQUIPMENT.map((eq) => (
                   <li
-                    key={item}
+                    key={eq.item}
                     className="flex items-start gap-3 pb-2 border-b border-cream last:border-0 last:pb-0"
                   >
                     <CheckCircle2 className="w-4 h-4 text-wheat mt-0.5 shrink-0" />
-                    <span className="text-sm text-muted-foreground">{item}</span>
+                    {eq.link ? (
+                      <Link
+                        href={eq.link}
+                        className="text-sm text-wheat hover:underline"
+                      >
+                        {eq.item} →
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{eq.item}</span>
+                    )}
                   </li>
                 ))}
               </ul>
               <div className="mt-6 p-4 bg-wheat/5 rounded-xl border border-wheat/20">
                 <p className="text-xs text-muted-foreground">
-                  <strong className="text-foreground">Don&rsquo;t have a starter?</strong> Ask a
-                  fellow baker or check with your local bakery. Many will give you some for free.
-                  Starting from scratch takes about 5–7 days.
+                  <strong className="text-foreground">Don&rsquo;t have a starter?</strong> Just reach out to us or any one of your church bakers and ask them for some — sharing starter is half the joy.
                 </p>
               </div>
             </div>

@@ -12,8 +12,8 @@ export function ImpactCalculator() {
   const count = typeof members === "number" && members > 0 ? members : 0;
   const annualRedirect = count * CALCULATOR.annual_spend_per_person;
   const loavesPerYear = count * CALCULATOR.weeks_per_year;
-  const at1000Churches = annualRedirect * 1000;
-  const at5000Churches = annualRedirect * 5000;
+  const loavesPerWeek = Math.ceil(loavesPerYear / 52);
+  const bakersNeeded = Math.ceil(loavesPerWeek / 10);
 
   return (
     <div className="bg-white rounded-2xl border border-wheat/20 shadow-sm p-8 max-w-2xl mx-auto">
@@ -58,12 +58,12 @@ export function ImpactCalculator() {
           value={formatNumber(loavesPerYear)}
         />
         <ResultCard
-          label="If 1,000 churches join"
-          value={formatCurrency(at1000Churches)}
+          label="Loaves needed each week"
+          value={formatNumber(loavesPerWeek)}
         />
         <ResultCard
-          label="If 5,000 churches join"
-          value={formatCurrency(at5000Churches)}
+          label="Bakers needed (10 loaves each)"
+          value={formatNumber(bakersNeeded)}
         />
       </div>
 
