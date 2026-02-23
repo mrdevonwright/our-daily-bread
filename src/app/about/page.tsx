@@ -55,12 +55,17 @@ export default function AboutPage() {
               from their own church family instead?
             </p>
             <p>
-              I ran a pilot. Five loaves. Sold out immediately. I made $56, donated
+              I ran a pilot. Six loaves. Sold out immediately. I made $56, donated
               it to the church. The demand could have supported ten or twenty
               loaves. Then the bigger thought hit:
             </p>
             <blockquote className="scripture text-lg">
               What if every Christian in America did this?
+            </blockquote>
+            <blockquote className="scripture">
+              &ldquo;Whoever eats my flesh and drinks my blood remains in me, and I in them.&rdquo;
+              <br />
+              <span className="not-italic text-xs font-medium text-wheat/80">— John 6:56</span>
             </blockquote>
             <p>
               Americans spend over{" "}
