@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SalesLogForm } from "@/components/dashboard/SalesLogForm";
-import type { Profile } from "@/lib/types";
+import type { Profile, Church } from "@/lib/types";
 import { AlertCircle } from "lucide-react";
 
 export default async function SalesPage() {
@@ -22,6 +22,18 @@ export default async function SalesPage() {
   if (!profile) redirect("/login");
 
   const p = profile as Profile;
+
+  let churchName = "";
+  if (p.church_id) {
+    const { data: church } = await supabase
+      .from("churches")
+      .select("name")
+      .eq("id", p.church_id)
+      .single();
+    churchName = (church as Church | null)?.name ?? "";
+  }
+
+  const bakerName = p.full_name || "";
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -53,6 +65,8 @@ export default async function SalesPage() {
           <SalesLogForm
             bakerId={p.id}
             churchId={p.church_id}
+            churchName={churchName}
+            bakerName={bakerName}
           />
         </div>
       )}
