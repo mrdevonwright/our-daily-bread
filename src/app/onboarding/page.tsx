@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { US_STATES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -34,11 +34,13 @@ const churchSchema = z.object({
 });
 type ChurchForm = z.infer<typeof churchSchema>;
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("friend");
-  const [path, setPath] = useState<Path>("choose");
+  const initialPath = (searchParams.get("path") as Path) || "choose";
+  const [path, setPath] = useState<Path>(initialPath);
 
   // Baker join state
   const [selectedState, setSelectedState] = useState("");
@@ -101,9 +103,12 @@ export default function OnboardingPage() {
     try {
       const supabase = createClient();
 
-      const { data: churchData, error: churchError } = await supabase
+      const newChurchId = crypto.randomUUID();
+
+      const { error: churchError } = await supabase
         .from("churches")
         .insert({
+          id: newChurchId,
           name: data.church_name,
           denomination: data.denomination || null,
           city: data.city,
@@ -111,14 +116,12 @@ export default function OnboardingPage() {
           website: data.website || null,
           admin_id: userId,
           approved: false,
-        })
-        .select("id")
-        .single();
+        });
       if (churchError) throw churchError;
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ role: "church_admin", church_id: churchData.id })
+        .update({ role: "church_admin", church_id: newChurchId })
         .eq("id", userId);
       if (profileError) throw profileError;
 
@@ -210,6 +213,16 @@ export default function OnboardingPage() {
                   </span>
                 </button>
               </div>
+
+              <p className="text-center mt-6 text-sm text-muted-foreground">
+                Not ready yet?{" "}
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="text-wheat hover:underline"
+                >
+                  Skip for now →
+                </button>
+              </p>
             </>
           )}
 
@@ -382,5 +395,13 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense>
+      <OnboardingContent />
+    </Suspense>
   );
 }

@@ -5,7 +5,7 @@ import type { Profile, SaleLog, Church } from "@/lib/types";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Church as ChurchIcon, Users } from "lucide-react";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -25,11 +25,6 @@ export default async function DashboardPage() {
   if (!profile) redirect("/login");
 
   const p = profile as Profile;
-
-  // Redirect to onboarding if account isn't fully set up yet
-  if (!p.role || (p.role !== "super_admin" && !p.church_id)) {
-    redirect("/onboarding");
-  }
 
   // Recent sales
   const { data: recentSales } = await supabase
@@ -92,6 +87,42 @@ export default async function DashboardPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Setup CTA — shown until user joins or creates a church */}
+      {!p.church_id && (
+        <div className="bg-cream rounded-2xl border-2 border-wheat/30 p-8">
+          <h2 className="font-serif text-xl font-bold mb-1">Complete your setup</h2>
+          <p className="text-muted-foreground mb-6">
+            Connect to a church to start logging sales and tracking your impact.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Link
+              href="/onboarding?path=create"
+              className="group flex items-start gap-4 bg-white rounded-xl border-2 border-border hover:border-wheat p-5 transition-all hover:shadow-md"
+            >
+              <div className="w-10 h-10 rounded-lg bg-wheat/10 flex items-center justify-center shrink-0 group-hover:bg-wheat/20 transition-colors">
+                <ChurchIcon className="w-5 h-5 text-wheat" />
+              </div>
+              <div>
+                <div className="font-semibold text-sm mb-0.5">Start a church ministry</div>
+                <div className="text-xs text-muted-foreground">Register your church and become the admin.</div>
+              </div>
+            </Link>
+            <Link
+              href="/onboarding?path=join"
+              className="group flex items-start gap-4 bg-white rounded-xl border-2 border-border hover:border-forest p-5 transition-all hover:shadow-md"
+            >
+              <div className="w-10 h-10 rounded-lg bg-forest/10 flex items-center justify-center shrink-0 group-hover:bg-forest/20 transition-colors">
+                <Users className="w-5 h-5 text-forest" />
+              </div>
+              <div>
+                <div className="font-semibold text-sm mb-0.5">Join an existing church</div>
+                <div className="text-xs text-muted-foreground">Find your church and start logging sales.</div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Personal stats */}
       <div>
