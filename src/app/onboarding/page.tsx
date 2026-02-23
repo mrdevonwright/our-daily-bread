@@ -100,22 +100,28 @@ export default function OnboardingPage() {
     if (!userId) return;
     try {
       const supabase = createClient();
+
+      const { data: churchData, error: churchError } = await supabase
+        .from("churches")
+        .insert({
+          name: data.church_name,
+          denomination: data.denomination || null,
+          city: data.city,
+          state: data.state,
+          website: data.website || null,
+          admin_id: userId,
+          approved: false,
+        })
+        .select("id")
+        .single();
+      if (churchError) throw churchError;
+
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ role: "church_admin" })
+        .update({ role: "church_admin", church_id: churchData.id })
         .eq("id", userId);
       if (profileError) throw profileError;
 
-      const { error: churchError } = await supabase.from("churches").insert({
-        name: data.church_name,
-        denomination: data.denomination || null,
-        city: data.city,
-        state: data.state,
-        website: data.website || null,
-        admin_id: userId,
-        approved: false,
-      });
-      if (churchError) throw churchError;
       setPath("done");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Registration failed");

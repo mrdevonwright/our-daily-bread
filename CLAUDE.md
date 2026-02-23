@@ -35,9 +35,10 @@ Always use the right client for the context:
 
 ### External Service Initialization
 
-Stripe and Resend are **lazily initialized** to avoid build-time failures when env vars aren't present:
+Stripe, Resend, and Anthropic are **lazily initialized** to avoid build-time failures when env vars aren't present:
 - `src/lib/stripe.ts` → `getStripe()` factory function
 - `src/lib/resend.ts` → `getResend()` factory function
+- `src/app/api/chat/route.ts` → `getClient()` local factory (Anthropic SDK)
 
 Never call these at module level — always call inside request handlers.
 
@@ -55,6 +56,7 @@ This is already set on `src/app/page.tsx` and `src/app/api/churches/route.ts`. A
 
 | Route | Purpose |
 |---|---|
+| `/api/chat` | Manna AI chatbot — POST `{ messages }`, calls Anthropic, returns `{ reply }` |
 | `/api/churches` | List approved churches; filterable by `?state=` |
 | `/api/contact` | Contact form → saves to DB + Resend email to admin |
 | `/api/donate/checkout` | Create Stripe Checkout session |
@@ -74,7 +76,7 @@ DB triggers auto-update `global_stats` and `profiles` aggregates when sales are 
 ### Content in Constants
 
 Static content lives in `src/lib/constants.ts` rather than in page files:
-- `RECIPE_INGREDIENTS` / `RECIPE_EQUIPMENT` / `RECIPE_STEPS` / `SELLING_TIPS` — recipe page
+- `RECIPE_INGREDIENTS` / `RECIPE_EQUIPMENT` / `RECIPE_STEPS` / `SELLING_TIPS` — recipe page (`RecipeStep` has an optional `tip` field rendered below each step's instructions)
 - `BIBLE_VERSES` — about page accordion
 - `TESTIMONIALS` — homepage
 - `NATIONAL_BREAD_STATS` / `CALCULATOR` — about page stats + impact calculator
@@ -97,6 +99,10 @@ Utility class patterns used throughout:
 - `bg-wheat-texture` — cream textured background
 - `font-serif` — Lora headings
 - `scripture` — italic blockquote style for Bible verses
+
+### Manna AI Chatbot
+
+`src/components/chat/MannaChatBot.tsx` — floating `"use client"` component mounted globally in `layout.tsx`. Sends full conversation history to `/api/chat` on each message. The system prompt and extended bread knowledge live entirely in `src/app/api/chat/route.ts`; `src/app/api/chat/manna-bread-knowledge.md` is a reference document used when updating that prompt. Uses `claude-haiku-4-5-20251001`. Requires `ANTHROPIC_API_KEY` env var.
 
 ### Real-time Ticker
 
