@@ -12,6 +12,8 @@ export interface Profile {
   church_id: string | null;
   bio: string | null;
   avatar_url: string | null;
+  phone: string | null;
+  address: string | null;
   loaves_sold: number;
   money_raised: number;
   created_at: string;

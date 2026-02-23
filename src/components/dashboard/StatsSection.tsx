@@ -114,20 +114,28 @@ export function StatsSection({
   const avgPerLoaf =
     loavesSold > 0 ? moneyRaised / loavesSold : 0;
 
+  // "This month" totals computed from chartSales
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  const startOfMonthStr = startOfMonth.toISOString().slice(0, 10);
+  const thisMonthSales = chartSales.filter((s) => s.sold_at >= startOfMonthStr);
+  const thisMonthLoaves = thisMonthSales.reduce((sum, s) => sum + s.loaves_count, 0);
+  const thisMonthMoney = thisMonthSales.reduce((sum, s) => sum + Number(s.amount_raised), 0);
+
   const stats: { id: Metric; icon: typeof Wheat; label: string; value: string; sub: string }[] = [
     {
       id: "loaves",
       icon: Wheat,
       label: "Total Loaves Sold",
       value: formatNumber(loavesSold),
-      sub: `across ${salesCount} Sunday${salesCount !== 1 ? "s" : ""}`,
+      sub: thisMonthLoaves > 0 ? `+${formatNumber(thisMonthLoaves)} this month` : `across ${salesCount} Sunday${salesCount !== 1 ? "s" : ""}`,
     },
     {
       id: "money",
       icon: DollarSign,
       label: "Total Money Raised",
       value: formatCurrency(moneyRaised),
-      sub: "for the congregation",
+      sub: thisMonthMoney > 0 ? `+${formatCurrency(thisMonthMoney)} this month` : "for the congregation",
     },
     {
       id: "avgSunday",

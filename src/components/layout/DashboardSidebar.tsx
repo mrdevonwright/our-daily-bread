@@ -9,6 +9,7 @@ import {
   Wheat,
   LogOut,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/types";
@@ -40,6 +41,12 @@ const SIDEBAR_LINKS: SidebarLink[] = [
     label: "Members",
     icon: Users,
     roles: ["church_admin", "super_admin"],
+  },
+  {
+    href: "/dashboard/settings",
+    label: "Settings",
+    icon: Settings,
+    roles: ["baker", "church_admin", "super_admin"],
   },
 ];
 
