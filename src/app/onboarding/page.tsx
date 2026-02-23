@@ -150,7 +150,7 @@ function OnboardingContent() {
             Your account is ready. Head to your dashboard to get started.
           </p>
           <Button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => { router.refresh(); router.push("/dashboard"); }}
             className="w-full bg-wheat hover:bg-wheat-dark text-white py-5 text-base"
           >
             Go to Dashboard
