@@ -153,7 +153,7 @@ export function Navbar() {
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/signup/church">
+                <Link href="/signup">
                   <Button size="sm" className="bg-wheat hover:bg-wheat-dark text-white">
                     Join the Movement
                   </Button>
@@ -218,7 +218,7 @@ export function Navbar() {
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/signup/church" onClick={() => setIsOpen(false)}>
+                <Link href="/signup" onClick={() => setIsOpen(false)}>
                   <Button size="sm" className="w-full bg-wheat hover:bg-wheat-dark text-white">
                     Join the Movement
                   </Button>

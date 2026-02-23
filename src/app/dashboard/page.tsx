@@ -26,6 +26,11 @@ export default async function DashboardPage() {
 
   const p = profile as Profile;
 
+  // Redirect to onboarding if account isn't fully set up yet
+  if (!p.role || (p.role !== "super_admin" && !p.church_id)) {
+    redirect("/onboarding");
+  }
+
   // Recent sales
   const { data: recentSales } = await supabase
     .from("sales_logs")
@@ -72,7 +77,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground">
-            Welcome back, {p.full_name.split(" ")[0]}!
+            Welcome back, {(p.full_name || "Baker").split(" ")[0]}!
           </h1>
           <p className="text-muted-foreground mt-1">
             {p.role === "church_admin"
