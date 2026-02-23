@@ -58,7 +58,7 @@ export default async function HomePage() {
             of fellow bakers across the nation.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup/church">
+            <Link href="/signup">
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-white text-wheat hover:bg-cream font-semibold px-8 py-5 text-base"

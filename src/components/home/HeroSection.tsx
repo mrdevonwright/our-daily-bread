@@ -43,7 +43,7 @@ export function HeroSection() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/signup/church">
+          <Link href="/signup">
             <Button
               size="lg"
               className="w-full sm:w-auto bg-wheat hover:bg-wheat-dark text-white font-medium text-base px-8 py-6"
@@ -51,7 +51,7 @@ export function HeroSection() {
               Register Your Church
             </Button>
           </Link>
-          <Link href="/signup/baker">
+          <Link href="/signup">
             <Button
               size="lg"
               variant="outline"

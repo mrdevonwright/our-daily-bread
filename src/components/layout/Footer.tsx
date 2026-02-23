@@ -9,9 +9,9 @@ const FOOTER_LINKS = {
     { href: "/social", label: "Stories" },
   ],
   "Get Involved": [
-    { href: "/signup/church", label: "Register Your Church" },
-    { href: "/signup/baker", label: "Join as a Baker" },
+    { href: "/signup", label: "Join the Movement" },
     { href: "/donate", label: "Donate" },
+    { href: "/resources", label: "Resources" },
     { href: "/dashboard", label: "Dashboard" },
   ],
   Resources: [

@@ -46,7 +46,7 @@ export default function DonateSuccessPage() {
               Back to Home
             </Button>
           </Link>
-          <Link href="/signup/church">
+          <Link href="/signup">
             <Button variant="outline" className="w-full sm:w-auto border-wheat text-wheat hover:bg-wheat/10">
               Register Your Church
             </Button>

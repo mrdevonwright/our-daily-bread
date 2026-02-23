@@ -55,7 +55,7 @@ export default async function MembersPage() {
         <strong className="text-foreground">Recruit more bakers:</strong> Share
         this link with your congregation:{" "}
         <code className="bg-white px-2 py-0.5 rounded text-xs border border-wheat/20">
-          ourdailybread.club/signup/baker
+          ourdailybread.club/signup
         </code>
         . They&rsquo;ll find your church by state when they sign up.
       </div>

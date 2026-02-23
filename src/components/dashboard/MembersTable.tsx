@@ -59,7 +59,7 @@ export function MembersTable({ members }: MembersTableProps) {
         <span className="text-4xl block mb-3">🍞</span>
         <p className="text-muted-foreground">
           No bakers have joined your church yet. Share the link to
-          /signup/baker with your congregation!
+          /signup with your congregation!
         </p>
       </div>
     );

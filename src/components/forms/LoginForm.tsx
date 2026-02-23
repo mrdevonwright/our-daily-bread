@@ -97,15 +97,11 @@ export function LoginForm() {
           {loading ? "Signing In…" : "Sign In"}
         </Button>
 
-        <div className="text-center space-y-2 pt-2">
+        <div className="text-center pt-2">
           <p className="text-sm text-muted-foreground">
-            Not registered yet?{" "}
-            <Link href="/signup/church" className="text-wheat hover:underline font-medium">
-              Register your church
-            </Link>{" "}
-            or{" "}
-            <Link href="/signup/baker" className="text-wheat hover:underline font-medium">
-              join as a baker
+            Don&rsquo;t have an account?{" "}
+            <Link href="/signup" className="text-wheat hover:underline font-medium">
+              Create one free
             </Link>
           </p>
         </div>

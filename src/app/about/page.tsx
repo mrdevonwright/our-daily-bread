@@ -167,7 +167,7 @@ export default function AboutPage() {
             Register your church or join as a baker. It begins with one loaf.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup/church">
+            <Link href="/signup">
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-wheat hover:bg-wheat-dark text-white font-medium px-8 py-5"
