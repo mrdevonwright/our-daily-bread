@@ -124,6 +124,7 @@ export const RECIPE_STEPS: RecipeStep[] = [
       "Stir well until fully combined, then cover loosely and leave in a warm spot (70–75°F).",
       "Your starter is ready when it has doubled in size and is bubbly and active — usually 4–12 hours. If it's sluggish, feed it once more before baking.",
     ],
+    tip: "Don't over think feeding. The goal is to begin baking when the starter is just past its peak... but if you're a bit early or even many hours late, it's totally fine. Just try not to feed it right before you start mixing dough. Good to give it at least a few hours to digest if you can.",
   },
   {
     day: "Evening — ~10 minutes active",
@@ -132,8 +133,9 @@ export const RECIPE_STEPS: RecipeStep[] = [
     instructions: [
       "In a large bowl, dissolve 100g active starter in 350g warm water (~80°F), stirring until milky.",
       "Add 500g flour and 10g salt. Mix with a spoon or your hands until no dry flour remains — the dough will look shaggy and sticky. No kneading needed.",
-      "Cover with a damp towel or plastic wrap and rest at room temperature for 30–60 minutes. This is autolyse: the flour absorbs the water and gluten begins to develop on its own.",
+      "Cover with a damp towel and rest at room temperature for 30–60 minutes. This is autolyse: the flour absorbs the water and gluten begins to develop on its own.",
     ],
+    tip: "Try mixing with a Danish dough whisk — it's a simple hook-shaped wire tool that cuts through shaggy dough effortlessly and barely needs washing. Way easier than a spoon or your hands for this initial mix.",
   },
   {
     day: "Evening — Repeated over ~2 hours",
@@ -144,16 +146,17 @@ export const RECIPE_STEPS: RecipeStep[] = [
       "Cover and wait 30 minutes, then repeat. Do this 3–4 times total over the next 2 hours.",
       "Each set builds strength without kneading. The dough will become noticeably more elastic.",
     ],
+    tip: "Try lifting the dough out of the bowl and doing your folds with both hands — it's easier and more satisfying! Just make sure to really wet your hands between each fold. It keeps the dough from sticking and makes the whole process much cleaner.",
   },
   {
     day: "Overnight — 8–12 hours",
     title: "Bulk Fermentation",
     duration: "Hands-off · 8–12 hours",
     instructions: [
-      "After your last fold, cover the bowl tightly and leave at room temperature overnight.",
+      "After your last fold, cover the bowl with a wet towel and leave at room temperature overnight.",
       "The dough should roughly double in size, become airy with bubbles on top, and jiggle slightly when shaken.",
-      "If your kitchen is cool, it may take longer. If warm, check it earlier. It's ready when it looks pillowy and alive.",
     ],
+    tip: "If your kitchen is cool, it may take longer. If warm, check it earlier. It's ready when it looks pillowy and alive.",
   },
   {
     day: "Morning — ~10 minutes",
@@ -161,10 +164,11 @@ export const RECIPE_STEPS: RecipeStep[] = [
     duration: "10 minutes active · 1–2 hours to proof",
     instructions: [
       "Gently turn the dough out onto a lightly floured surface.",
-      "Fold the edges into the center to form a ball, then flip it seam-side down. Cup your hands around it and rotate to tighten the surface — this tension is what gives the loaf a good rise.",
+      "Fold and pinch the edges into the center to form a ball, then flip it seam-side down. Cup your hands around it and rotate to tighten the surface — this tension is what gives the loaf a good rise.",
       "Place seam-side up in a well-floured proofing basket or a bowl lined with a floured tea towel.",
       "Cover and let it proof 1–2 hours at room temperature until puffy. It's ready when it springs back slowly (not immediately) when poked with a floured finger.",
     ],
+    tip: "The dough will be quite stuck to the bowl! Before turning it out, gently pull the edges of the dough away from the sides to help free it. Then flip the bowl and give it a little jiggle — it'll come out much easier.",
   },
   {
     day: "Morning — ~1 hour",
@@ -174,7 +178,7 @@ export const RECIPE_STEPS: RecipeStep[] = [
       "About 30 minutes before baking, place a Dutch oven (with lid) in your oven and preheat to 450°F.",
       "Once hot, carefully remove the Dutch oven. Turn the dough out onto parchment paper, seam-side down.",
       "Score the top with a sharp knife or razor — an X, a slash, or any pattern. This lets it expand in the oven.",
-      "Lift the dough by the parchment into the pot, cover with the lid, and bake for 20 minutes.",
+      "Lift the dough by the parchment into the pot. Drop a few ice cubes in alongside the dough, quickly cover with the lid, and get it back in the oven. The steam gives the dough maximum spring and softness. Bake covered for 20 minutes.",
       "Remove the lid and bake another 20–25 minutes until the crust is deep golden brown. The internal temperature should reach 200–210°F.",
     ],
   },
@@ -187,6 +191,7 @@ export const RECIPE_STEPS: RecipeStep[] = [
       "The bread is still setting inside as it cools — cutting too early gives you a gummy crumb.",
       "Enjoy with butter. Store in a bread bag or box; it keeps well for 3–5 days.",
     ],
+    tip: "Especially enjoyable when shared with others :)",
   },
 ];
 

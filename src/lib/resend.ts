@@ -11,6 +11,6 @@ export function getResend(): Resend {
 }
 
 export const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "hello@ourdailybread.club";
+  process.env.RESEND_FROM_EMAIL || "Our Daily Bread <onboarding@resend.dev>";
 export const ADMIN_EMAIL =
   process.env.RESEND_ADMIN_EMAIL || "admin@ourdailybread.club";

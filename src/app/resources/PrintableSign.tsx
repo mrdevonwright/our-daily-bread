@@ -4,8 +4,21 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 
-export function PrintableSign() {
+interface PrintableSignProps {
+  qrSvgHtml?: string;
+}
+
+export function PrintableSign({ qrSvgHtml }: PrintableSignProps) {
   const signRef = useRef<HTMLDivElement>(null);
+
+  // Scale the QR SVG for the print version (override its intrinsic size)
+  const qrPrintSection = qrSvgHtml
+    ? `
+    <div class="qr-section">
+      <div class="qr-wrap">${qrSvgHtml}</div>
+      <div class="qr-label">Scan to Pay</div>
+    </div>`
+    : "";
 
   function handlePrint() {
     const printWindow = window.open("", "_blank", "width=800,height=900");
@@ -29,7 +42,6 @@ export function PrintableSign() {
     }
     .sign {
       width: 5.5in;
-      min-height: 4in;
       border: 4px solid #C8973A;
       border-radius: 16px;
       padding: 40px 48px;
@@ -91,6 +103,28 @@ export function PrintableSign() {
       padding-top: 12px;
       border-top: 1px solid #E8D5B0;
     }
+    .qr-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #E8D5B0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .qr-wrap svg {
+      width: 160px;
+      height: 160px;
+      display: block;
+    }
+    .qr-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #C8973A;
+    }
     @media print {
       body { padding: 0; }
       .sign { border-radius: 0; border-width: 3px; }
@@ -107,6 +141,7 @@ export function PrintableSign() {
     <div class="face">😊</div>
     <div class="church-line">Fresh Sourdough · Baked with Love</div>
     <div class="scripture">&ldquo;Give us this day our daily bread.&rdquo; &mdash; Matthew 6:11</div>
+    ${qrPrintSection}
   </div>
   <script>
     window.onload = function() {
@@ -146,6 +181,25 @@ export function PrintableSign() {
         <p className="font-serif italic text-xs text-wheat/80 mt-3 pt-3 border-t border-wheat/20">
           &ldquo;Give us this day our daily bread.&rdquo; — Matthew 6:11
         </p>
+
+        {/* QR code — shown when generated in Step 2 */}
+        {qrSvgHtml ? (
+          <div className="mt-4 pt-4 border-t border-wheat/20 flex flex-col items-center gap-2">
+            <div
+              className="w-28 h-28 [&_svg]:w-full [&_svg]:h-full"
+              dangerouslySetInnerHTML={{ __html: qrSvgHtml }}
+            />
+            <p className="text-xs font-semibold uppercase tracking-widest text-wheat">
+              Scan to Pay
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 pt-4 border-t border-wheat/20">
+            <p className="text-xs text-muted-foreground/60 italic">
+              QR code will appear here after Step 2
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="text-center space-y-2">
@@ -155,10 +209,12 @@ export function PrintableSign() {
           size="lg"
         >
           <Printer className="w-4 h-4" />
-          Print Sign
+          {qrSvgHtml ? "Print Sign + QR" : "Print Sign"}
         </Button>
         <p className="text-xs text-muted-foreground">
-          Opens a print-ready version in a new tab · Prints at 5.5 × 4 inches
+          {qrSvgHtml
+            ? "Prints your sign with QR code included · 5.5 inches wide"
+            : "Opens a print-ready version in a new tab · Prints at 5.5 × 4 inches"}
         </p>
       </div>
     </div>

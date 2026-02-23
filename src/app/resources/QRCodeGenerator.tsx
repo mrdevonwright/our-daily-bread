@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,8 @@ const PAYMENT_APPS = [
     emoji: "💜",
     placeholder: "your-username",
     hint: "Your Venmo username (without @)",
-    buildUrl: (handle: string) => `https://venmo.com/u/${handle.replace(/^@/, "")}`,
+    buildUrl: (handle: string) =>
+      `https://venmo.com/u/${handle.replace(/^@/, "")}?txn=pay&note=${encodeURIComponent("🍞 ✝️")}`,
   },
   {
     id: "cashapp",
@@ -42,13 +43,28 @@ const PAYMENT_APPS = [
   },
 ];
 
-export function QRCodeGenerator() {
+interface QRCodeGeneratorProps {
+  onQrChange?: (svgHtml: string | null) => void;
+}
+
+export function QRCodeGenerator({ onQrChange }: QRCodeGeneratorProps) {
   const [appId, setAppId] = useState("venmo");
   const [handle, setHandle] = useState("");
   const qrRef = useRef<HTMLDivElement>(null);
+  const onQrChangeRef = useRef(onQrChange);
+  onQrChangeRef.current = onQrChange;
 
   const app = PAYMENT_APPS.find((a) => a.id === appId)!;
   const qrValue = handle.trim() ? app.buildUrl(handle.trim()) : "";
+
+  useEffect(() => {
+    if (qrValue) {
+      const svgEl = qrRef.current?.querySelector("svg");
+      onQrChangeRef.current?.(svgEl?.outerHTML ?? null);
+    } else {
+      onQrChangeRef.current?.(null);
+    }
+  }, [qrValue]);
 
   function handlePrint() {
     if (!qrValue) return;

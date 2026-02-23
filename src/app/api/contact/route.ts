@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     });
 
     // Send notification email to admin
-    await getResend().emails.send({
+    const { error: emailError } = await getResend().emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
       replyTo: data.email,
@@ -43,6 +43,10 @@ export async function POST(request: Request) {
         <p style="color:#888;font-size:12px">Sent from ourdailybread.club contact form</p>
       `,
     });
+
+    if (emailError) {
+      console.error("Resend error:", emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

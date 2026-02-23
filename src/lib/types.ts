@@ -172,6 +172,7 @@ export interface RecipeStep {
   title: string;
   duration: string;
   instructions: string[];
+  tip?: string;
 }
 
 export interface ChurchWithStats extends Church {

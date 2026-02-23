@@ -130,7 +130,11 @@ export default function RecipePage() {
             </h2>
             <p className="text-muted-foreground">
               The bread is almost entirely hands-off. The active work is spread
-              over two days in short bursts.
+              over 12 to 24 hours in short bursts. The longer you take, the
+              more depth and complexity you&rsquo;ll get in the bread. But
+              it&rsquo;s truly an art, so don&rsquo;t feel too much pressure to
+              stick to the script! Feel free to experiment with the time you
+              take at each step to see what you get. That&rsquo;s half the fun!
             </p>
           </div>
 
@@ -170,6 +174,14 @@ export default function RecipePage() {
                       </li>
                     ))}
                   </ol>
+                  {step.tip && (
+                    <div className="mt-4 p-3.5 bg-wheat/5 border border-wheat/20 rounded-lg">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        <span className="font-semibold text-wheat">Tip: </span>
+                        {step.tip}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

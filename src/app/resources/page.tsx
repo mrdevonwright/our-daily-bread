@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { PrintableSign } from "./PrintableSign";
-import { QRCodeGenerator } from "./QRCodeGenerator";
+import { ResourcesClientSection } from "./ResourcesClientSection";
 import { ExternalLink, ShoppingBag, Package, FlameKindling, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -162,48 +161,7 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      {/* Printable Sign */}
-      <section className="section-padding border-b border-wheat/20">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <span className="inline-block bg-wheat/10 text-wheat text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider mb-3">
-              Step 1 · Print &amp; Display
-            </span>
-            <h2 className="font-serif text-3xl font-bold mb-2">
-              Your Table Sign
-            </h2>
-            <p className="text-muted-foreground max-w-xl">
-              Place this on your table next to the bread. The &ldquo;pay
-              whatever you want&rdquo; model removes the awkwardness and usually
-              results in more generous giving.
-            </p>
-          </div>
-          <PrintableSign />
-        </div>
-      </section>
-
-      {/* QR Code Generator */}
-      <section className="section-padding border-b border-wheat/20 bg-cream/60">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <span className="inline-block bg-wheat/10 text-wheat text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider mb-3">
-              Step 2 · Accept Payments
-            </span>
-            <h2 className="font-serif text-3xl font-bold mb-2">
-              Payment QR Code
-            </h2>
-            <p className="text-muted-foreground max-w-xl">
-              Enter your Venmo, Cash App, or Zelle handle and we&rsquo;ll
-              generate a QR code your buyers can scan with their phone. Print it
-              and prop it up next to the sign — no app download required for
-              them.
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl border border-wheat/20 shadow-sm p-8">
-            <QRCodeGenerator />
-          </div>
-        </div>
-      </section>
+      <ResourcesClientSection />
 
       {/* Vendors */}
       <section className="section-padding">
