@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import { US_STATES } from "@/lib/constants";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
+import { GoogleAuthButton, OrDivider } from "./GoogleAuthButton";
 
 const schema = z
   .object({
@@ -117,6 +118,13 @@ export function ChurchSignupForm() {
   }
 
   return (
+    <div className="space-y-6">
+      <GoogleAuthButton
+        next="/signup/church/complete"
+        label="Sign up with Google"
+      />
+      <OrDivider />
+
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Church details */}
       <fieldset>
@@ -278,5 +286,6 @@ export function ChurchSignupForm() {
         publicly on the site (usually within 24 hours).
       </p>
     </form>
+    </div>
   );
 }

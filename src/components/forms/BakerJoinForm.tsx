@@ -19,6 +19,7 @@ import { US_STATES } from "@/lib/constants";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 import type { Church } from "@/lib/types";
+import { GoogleAuthButton, OrDivider } from "./GoogleAuthButton";
 
 const schema = z
   .object({
@@ -115,6 +116,13 @@ export function BakerJoinForm() {
   }
 
   return (
+    <div className="space-y-5">
+      <GoogleAuthButton
+        next="/signup/baker/complete"
+        label="Sign up with Google"
+      />
+      <OrDivider />
+
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -242,5 +250,6 @@ export function BakerJoinForm() {
         {isSubmitting ? "Joining…" : "Join as a Baker"}
       </Button>
     </form>
+    </div>
   );
 }
