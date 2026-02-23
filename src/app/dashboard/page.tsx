@@ -80,12 +80,14 @@ export default async function DashboardPage() {
               : "Your baker dashboard"}
           </p>
         </div>
-        <Link href="/dashboard/sales">
-          <Button className="bg-wheat hover:bg-wheat-dark text-white gap-2">
-            <PlusCircle className="w-4 h-4" />
-            Log Sales
-          </Button>
-        </Link>
+        {p.church_id && (
+          <Link href="/dashboard/sales">
+            <Button className="bg-wheat hover:bg-wheat-dark text-white gap-2">
+              <PlusCircle className="w-4 h-4" />
+              Log Sales
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Setup CTA — shown until user joins or creates a church */}

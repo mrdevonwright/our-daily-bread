@@ -58,8 +58,16 @@ function OnboardingContent() {
   } = useForm<ChurchForm>({ resolver: zodResolver(churchSchema) });
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.replace("/login"); return; }
+      // Already fully set up — skip onboarding
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, church_id")
+        .eq("id", data.user.id)
+        .single();
+      if (profile?.church_id) { router.replace("/dashboard"); return; }
       setUserId(data.user.id);
       const name =
         data.user.user_metadata?.full_name ||
