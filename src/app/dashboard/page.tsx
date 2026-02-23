@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatsCards } from "@/components/dashboard/StatsCards";
+import { RecentSalesTable } from "@/components/dashboard/RecentSalesTable";
 import type { Profile, SaleLog, Church } from "@/lib/types";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Church as ChurchIcon, Users } from "lucide-react";
@@ -26,40 +27,48 @@ export default async function DashboardPage() {
 
   const p = profile as Profile;
 
-  // Recent sales
-  const { data: recentSales } = await supabase
-    .from("sales_logs")
-    .select("*")
-    .eq("baker_id", user.id)
-    .order("sold_at", { ascending: false })
-    .limit(10);
+  // Fetch in parallel: recent sales + total sale count + church name
+  const [
+    { data: recentSales },
+    { count: salesCount },
+    { data: churchData },
+  ] = await Promise.all([
+    supabase
+      .from("sales_logs")
+      .select("*")
+      .eq("baker_id", user.id)
+      .order("sold_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("sales_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("baker_id", user.id),
+    p.church_id
+      ? supabase.from("churches").select("*").eq("id", p.church_id).single()
+      : Promise.resolve({ data: null }),
+  ]);
 
-  // Church stats if admin
-  let church: Church | null = null;
+  const church = churchData as Church | null;
+  const churchName = church?.name ?? "";
+
+  // Church stats (admins only)
   let churchBakerCount = 0;
   let churchTotalLoaves = 0;
   let churchTotalRaised = 0;
 
-  if (p.church_id && (p.role === "church_admin" || p.role === "super_admin")) {
-    const { data: churchData } = await supabase
-      .from("churches")
-      .select("*")
-      .eq("id", p.church_id)
-      .single();
+  if (church && (p.role === "church_admin" || p.role === "super_admin")) {
+    const [{ count }, { data: aggData }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("church_id", p.church_id),
+      supabase
+        .from("sales_logs")
+        .select("loaves_count, amount_raised")
+        .eq("church_id", p.church_id),
+    ]);
 
-    church = churchData as Church;
-
-    const { count } = await supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .eq("church_id", p.church_id);
     churchBakerCount = count || 0;
-
-    const { data: aggData } = await supabase
-      .from("sales_logs")
-      .select("loaves_count, amount_raised")
-      .eq("church_id", p.church_id);
-
     if (aggData) {
       churchTotalLoaves = aggData.reduce((sum, r) => sum + r.loaves_count, 0);
       churchTotalRaised = aggData.reduce((sum, r) => sum + Number(r.amount_raised), 0);
@@ -76,7 +85,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-muted-foreground mt-1">
             {p.role === "church_admin"
-              ? `Managing ${church?.name || "your church"}`
+              ? `Managing ${churchName || "your church"}`
               : "Your baker dashboard"}
           </p>
         </div>
@@ -132,14 +141,15 @@ export default async function DashboardPage() {
         <StatsCards
           loavesSold={p.loaves_sold}
           moneyRaised={Number(p.money_raised)}
+          salesCount={salesCount ?? 0}
         />
       </div>
 
       {/* Church stats (admins) */}
-      {church && (
+      {church && (p.role === "church_admin" || p.role === "super_admin") && (
         <div>
           <h2 className="font-serif text-xl font-semibold mb-4">
-            {church.name} Church Stats
+            {churchName} Church Stats
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl p-5 border border-wheat/15 shadow-sm">
@@ -168,58 +178,16 @@ export default async function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-serif text-xl font-semibold">Recent Sales</h2>
-          <Link
-            href="/dashboard/sales"
-            className="text-sm text-wheat hover:underline"
-          >
+          <Link href="/dashboard/sales" className="text-sm text-wheat hover:underline">
             Log new sale →
           </Link>
         </div>
-
-        {!recentSales || recentSales.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-wheat/15 p-10 text-center">
-            <span className="text-4xl block mb-3">🍞</span>
-            <p className="text-muted-foreground mb-4">
-              No sales logged yet. Start selling and log your first Sunday!
-            </p>
-            <Link href="/dashboard/sales">
-              <Button className="bg-wheat hover:bg-wheat-dark text-white">
-                Log My First Sale
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-wheat/15 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-cream border-b border-wheat/20">
-                <tr>
-                  <th className="text-left px-5 py-3 text-muted-foreground font-medium">Date</th>
-                  <th className="text-right px-5 py-3 text-muted-foreground font-medium">Loaves</th>
-                  <th className="text-right px-5 py-3 text-muted-foreground font-medium">Raised</th>
-                  <th className="text-left px-5 py-3 text-muted-foreground font-medium hidden md:table-cell">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-wheat/10">
-                {(recentSales as SaleLog[]).map((sale) => (
-                  <tr key={sale.id} className="hover:bg-cream/50 transition-colors">
-                    <td className="px-5 py-3 text-foreground">
-                      {formatDate(sale.sold_at)}
-                    </td>
-                    <td className="px-5 py-3 text-right font-medium">
-                      {sale.loaves_count}
-                    </td>
-                    <td className="px-5 py-3 text-right font-medium text-wheat">
-                      {formatCurrency(Number(sale.amount_raised))}
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">
-                      {sale.notes || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <RecentSalesTable
+          sales={(recentSales as SaleLog[]) ?? []}
+          churchName={churchName}
+          bakerName={p.full_name || ""}
+          bakerId={p.id}
+        />
       </div>
     </div>
   );

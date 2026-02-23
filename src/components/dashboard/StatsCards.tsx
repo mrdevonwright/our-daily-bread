@@ -4,6 +4,7 @@ import { Wheat, DollarSign, Calendar, TrendingUp } from "lucide-react";
 interface StatsCardsProps {
   loavesSold: number;
   moneyRaised: number;
+  salesCount?: number;
   recentLoaves?: number;
   recentMoney?: number;
 }
@@ -11,6 +12,7 @@ interface StatsCardsProps {
 export function StatsCards({
   loavesSold,
   moneyRaised,
+  salesCount = 0,
   recentLoaves = 0,
   recentMoney = 0,
 }: StatsCardsProps) {
@@ -30,11 +32,10 @@ export function StatsCards({
     {
       icon: Calendar,
       label: "Avg per Sunday",
-      value:
-        loavesSold > 0
-          ? formatNumber(Math.round(loavesSold / Math.max(1, Math.ceil(loavesSold / 5))))
-          : "0",
-      sub: "loaves",
+      value: loavesSold > 0 && salesCount > 0
+        ? formatNumber(Math.round(loavesSold / salesCount))
+        : "0",
+      sub: `across ${salesCount} Sunday${salesCount !== 1 ? "s" : ""}`,
     },
     {
       icon: TrendingUp,
