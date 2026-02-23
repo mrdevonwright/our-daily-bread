@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X, Send } from "lucide-react";
 
 interface Message {
@@ -15,6 +16,7 @@ const OPENING_MESSAGE: Message = {
 };
 
 export function MannaChatBot() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([OPENING_MESSAGE]);
   const [input, setInput] = useState("");
@@ -51,6 +53,10 @@ export function MannaChatBot() {
           ...prev,
           { role: "assistant", content: data.reply },
         ]);
+      }
+      // If Manna took an action that changed dashboard data, refresh the page
+      if (data.needsRefresh) {
+        router.refresh();
       }
     } catch {
       setMessages((prev) => [

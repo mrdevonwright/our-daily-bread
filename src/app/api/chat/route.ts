@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { getResend, FROM_EMAIL } from "@/lib/resend";
+import type { Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -173,11 +176,331 @@ BIBLE VERSES (use these naturally when relevant):
 
 ---
 
+YOUR AGENTIC CAPABILITIES:
+You can take real actions on behalf of logged-in bakers. Use these naturally — don't announce them upfront, let them come up in conversation:
+
+- **Log a sale**: When a baker tells you they sold loaves (e.g. "I sold 6 loaves for $56 today"), offer to log it for them. Confirm loaves, amount, and date before doing so. If they haven't specified a date, use today's.
+- **Check stats**: When someone asks how they're doing or what their numbers are, look up their live stats.
+- **Recent sales history**: When they want to review what they've logged, fetch their recent entries.
+- **Draft a blog post**: When asked to write a blog post, newsletter, or story about their week, write something heartfelt and faith-filled in their voice — then save it as a draft they can review and publish.
+- **Invite someone**: When they want to bring someone into the movement, send that person a warm email invitation on their behalf.
+
+After taking an action, confirm it warmly and naturally. For logged sales, mention the dashboard will show the update. For drafts, let them know it's saved and they can review it.
+
+If you're in a conversation where someone asks you to take an action but it seems you're not able to (e.g. the user might not be logged in), gently let them know they'll need to sign in first.
+
+---
+
 If someone asks about the website, signing up, or joining the movement, encourage them to visit ourdailybread.club and click "Get Started" or "Sign Up."
 
 If someone asks something you genuinely don't know, say so warmly and suggest they reach out via the contact page.
 
 Keep responses conversational and warm. You're not a FAQ page — you're a friend who happens to know a lot about bread and this beautiful ministry.`;
+
+// ── Tool definitions ────────────────────────────────────────────────────────
+
+const TOOLS: Anthropic.Tool[] = [
+  {
+    name: "log_sale",
+    description:
+      "Log a bread sale to the baker's dashboard. Use this when the user tells you about loaves they sold and money they raised.",
+    input_schema: {
+      type: "object",
+      properties: {
+        loaves_count: {
+          type: "number",
+          description: "Number of loaves sold (positive integer)",
+        },
+        amount_raised: {
+          type: "number",
+          description: "Total dollar amount raised (e.g. 56 for $56.00)",
+        },
+        sold_at: {
+          type: "string",
+          description:
+            "Date of the sale in YYYY-MM-DD format. Use today if the user says 'today' or doesn't specify a date.",
+        },
+        notes: {
+          type: "string",
+          description: "Optional notes about the sale",
+        },
+      },
+      required: ["loaves_count", "amount_raised", "sold_at"],
+    },
+  },
+  {
+    name: "get_my_stats",
+    description:
+      "Retrieve the baker's current stats: total loaves sold, total money raised, and number of sales logged.",
+    input_schema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "get_recent_sales",
+    description: "Retrieve the baker's most recent sales log entries.",
+    input_schema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "How many recent sales to return (default 5, max 10)",
+        },
+      },
+    },
+  },
+  {
+    name: "write_blog_post",
+    description:
+      "Draft a blog post about the baker's bread ministry and save it as an unpublished draft. Use when someone asks you to write a blog post, newsletter, or story about their week or sales.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Blog post title" },
+        content: {
+          type: "string",
+          description:
+            "Full blog post content in markdown format. Should be warm, faith-filled, and tell the story of their bread ministry. Aim for 300–600 words.",
+        },
+        excerpt: {
+          type: "string",
+          description: "A 1–2 sentence summary for the post preview",
+        },
+      },
+      required: ["title", "content"],
+    },
+  },
+  {
+    name: "invite_member",
+    description:
+      "Send an email invitation to someone to join the baker's church ministry on Our Daily Bread.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "First name of the person being invited",
+        },
+        email: {
+          type: "string",
+          description: "Email address to send the invitation to",
+        },
+        personal_note: {
+          type: "string",
+          description:
+            "A warm personal note from the baker to include in the invitation",
+        },
+      },
+      required: ["name", "email"],
+    },
+  },
+];
+
+// ── Tool executor ────────────────────────────────────────────────────────────
+
+async function executeTool(
+  toolName: string,
+  input: Record<string, unknown>,
+  userId: string,
+  profile: Profile
+): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+
+  try {
+    switch (toolName) {
+      case "log_sale": {
+        const loaves_count = Math.round(Number(input.loaves_count));
+        const amount_raised = Number(input.amount_raised);
+        const sold_at = String(input.sold_at);
+        const notes = input.notes ? String(input.notes) : null;
+
+        if (!profile.church_id) {
+          return {
+            success: false,
+            error:
+              "Baker is not connected to a church yet. They need to join or create a church first from their dashboard.",
+          };
+        }
+
+        const { error: insertError } = await admin.from("sales_logs").insert({
+          baker_id: userId,
+          church_id: profile.church_id,
+          loaves_count,
+          amount_raised,
+          sold_at,
+          notes,
+        });
+
+        if (insertError) return { success: false, error: insertError.message };
+
+        // Update profile aggregates
+        await admin
+          .from("profiles")
+          .update({
+            loaves_sold: profile.loaves_sold + loaves_count,
+            money_raised: Number(profile.money_raised) + amount_raised,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userId);
+
+        // Update global stats
+        const { data: stats } = await admin
+          .from("global_stats")
+          .select("total_loaves, total_raised")
+          .eq("id", 1)
+          .single();
+
+        if (stats) {
+          await admin
+            .from("global_stats")
+            .update({
+              total_loaves: stats.total_loaves + loaves_count,
+              total_raised: Number(stats.total_raised) + amount_raised,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", 1);
+        }
+
+        return { success: true, loaves_count, amount_raised, sold_at, notes };
+      }
+
+      case "get_my_stats": {
+        const [{ data: p }, { count }] = await Promise.all([
+          admin
+            .from("profiles")
+            .select("loaves_sold, money_raised")
+            .eq("id", userId)
+            .single(),
+          admin
+            .from("sales_logs")
+            .select("*", { count: "exact", head: true })
+            .eq("baker_id", userId),
+        ]);
+        return {
+          loaves_sold: p?.loaves_sold ?? 0,
+          money_raised: Number(p?.money_raised ?? 0),
+          sales_count: count ?? 0,
+        };
+      }
+
+      case "get_recent_sales": {
+        const limit = Math.min(Number(input.limit) || 5, 10);
+        const { data: sales } = await admin
+          .from("sales_logs")
+          .select("loaves_count, amount_raised, sold_at, notes")
+          .eq("baker_id", userId)
+          .order("sold_at", { ascending: false })
+          .limit(limit);
+        return { sales: sales ?? [] };
+      }
+
+      case "write_blog_post": {
+        const title = String(input.title);
+        const content = String(input.content);
+        const excerpt = input.excerpt ? String(input.excerpt) : null;
+        const slug =
+          title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "") +
+          "-" +
+          Date.now();
+
+        const { data: post, error } = await admin
+          .from("blog_posts")
+          .insert({
+            title,
+            slug,
+            content,
+            excerpt,
+            author_id: userId,
+            published: false,
+          })
+          .select("id, slug")
+          .single();
+
+        if (error) return { success: false, error: error.message };
+        return {
+          success: true,
+          message: "Draft saved successfully!",
+          post_id: post.id,
+          slug: post.slug,
+        };
+      }
+
+      case "invite_member": {
+        const name = String(input.name);
+        const email = String(input.email);
+        const personal_note = input.personal_note
+          ? String(input.personal_note)
+          : null;
+
+        let churchName = "our church";
+        if (profile.church_id) {
+          const { data: church } = await admin
+            .from("churches")
+            .select("name")
+            .eq("id", profile.church_id)
+            .single();
+          if (church) churchName = church.name;
+        }
+
+        const senderName = profile.full_name || "A fellow baker";
+
+        const { error } = await getResend().emails.send({
+          from: FROM_EMAIL,
+          to: email,
+          subject: `${senderName} is inviting you to join Our Daily Bread 🍞`,
+          html: `
+            <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #2C1810; line-height: 1.6;">
+              <div style="border-bottom: 3px solid #C8973A; padding-bottom: 16px; margin-bottom: 24px;">
+                <h1 style="color: #C8973A; font-size: 28px; margin: 0;">Our Daily Bread 🌾</h1>
+                <p style="color: #6B5744; margin: 4px 0 0; font-size: 14px;">ourdailybread.club</p>
+              </div>
+
+              <p>Hi ${name},</p>
+
+              <p><strong>${senderName}</strong> thought of you and wants to invite you to join the bread ministry at <strong>${churchName}</strong> through <strong>Our Daily Bread</strong> — a movement where church members bake and sell homemade sourdough bread to fund their congregation.</p>
+
+              ${personal_note ? `<blockquote style="border-left: 4px solid #C8973A; padding: 8px 16px; margin: 16px 0; font-style: italic; color: #6B5744; background: #FFFDF6;">"${personal_note}"<br><span style="font-style: normal; font-size: 13px; color: #9E7A50;">— ${senderName}</span></blockquote>` : ""}
+
+              <p>It starts with one loaf. Bake sourdough at home, sell it at church on Sundays, and give every penny back to your congregation. The "pay whatever you want" model means it's welcoming for everyone — and usually results in beautiful generosity.</p>
+
+              <p>The founder sold his first loaf for $56 and donated it all to his church. That's the spirit.</p>
+
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="https://ourdailybread.club" style="background: #C8973A; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-family: sans-serif; font-weight: bold; font-size: 16px; display: inline-block;">
+                  Join the Movement →
+                </a>
+              </div>
+
+              <p style="font-style: italic; color: #6B5744; text-align: center;">"Give us this day our daily bread." — Matthew 6:11</p>
+
+              <hr style="border: none; border-top: 1px solid #E8D5B0; margin: 24px 0;">
+              <p style="font-size: 12px; color: #9E7A50;">You received this because ${senderName} personally invited you to join the Our Daily Bread movement. Visit <a href="https://ourdailybread.club" style="color: #C8973A;">ourdailybread.club</a> to learn more.</p>
+            </div>
+          `,
+        });
+
+        if (error)
+          return { success: false, error: "Failed to send invitation email." };
+        return {
+          success: true,
+          message: `Invitation sent to ${name} at ${email}!`,
+        };
+      }
+
+      default:
+        return { error: `Unknown tool: ${toolName}` };
+    }
+  } catch (err) {
+    console.error(`Tool execution error [${toolName}]:`, err);
+    return { success: false, error: "Tool execution failed unexpectedly." };
+  }
+}
+
+// ── Anthropic client ─────────────────────────────────────────────────────────
 
 let _client: Anthropic | null = null;
 function getClient() {
@@ -187,27 +510,119 @@ function getClient() {
   return _client;
 }
 
+// ── POST handler ─────────────────────────────────────────────────────────────
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { messages } = schema.parse(body);
 
-    const response = await getClient().messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      system: SYSTEM_PROMPT,
-      messages,
+    // Identify logged-in user for tool use
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let profile: Profile | null = null;
+    if (user) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      profile = data as Profile | null;
+    }
+
+    // Anonymous users: text-only Manna
+    if (!user || !profile) {
+      const response = await getClient().messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 512,
+        system: SYSTEM_PROMPT,
+        messages,
+      });
+      const reply =
+        response.content[0].type === "text" ? response.content[0].text : "";
+      return NextResponse.json({ reply });
+    }
+
+    // Authenticated: agentic loop with tools
+    const apiMessages: Anthropic.MessageParam[] = messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    const MAX_ITERATIONS = 6;
+    let needsRefresh = false;
+
+    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      const response = await getClient().messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2048,
+        system: SYSTEM_PROMPT,
+        tools: TOOLS,
+        messages: apiMessages,
+      });
+
+      if (response.stop_reason === "end_turn") {
+        const textBlock = response.content.find((b) => b.type === "text");
+        const reply = textBlock?.type === "text" ? textBlock.text : "";
+        return NextResponse.json({ reply, needsRefresh });
+      }
+
+      if (response.stop_reason === "tool_use") {
+        // Add assistant turn to history
+        apiMessages.push({
+          role: "assistant",
+          content: response.content,
+        });
+
+        // Execute all tool calls
+        const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
+        for (const block of response.content) {
+          if (block.type === "tool_use") {
+            if (block.name === "log_sale") needsRefresh = true;
+            const result = await executeTool(
+              block.name,
+              block.input as Record<string, unknown>,
+              user.id,
+              profile
+            );
+            toolResults.push({
+              type: "tool_result",
+              tool_use_id: block.id,
+              content: JSON.stringify(result),
+            });
+          }
+        }
+
+        // Add tool results as user turn and continue loop
+        apiMessages.push({
+          role: "user",
+          content: toolResults,
+        });
+        continue;
+      }
+
+      // Unexpected stop reason — return whatever text exists
+      const textBlock = response.content.find((b) => b.type === "text");
+      const reply = textBlock?.type === "text" ? textBlock.text : "";
+      return NextResponse.json({ reply, needsRefresh });
+    }
+
+    return NextResponse.json({
+      reply: "I got a little turned around — could you try again? 🙏",
+      needsRefresh,
     });
-
-    const reply =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    return NextResponse.json({ reply });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     console.error("Manna chat error:", err);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong" },
+      { status: 500 }
+    );
   }
 }
