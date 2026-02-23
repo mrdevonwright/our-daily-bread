@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { StatsCards } from "@/components/dashboard/StatsCards";
+import { StatsSection } from "@/components/dashboard/StatsSection";
 import { RecentSalesTable } from "@/components/dashboard/RecentSalesTable";
 import type { Profile, SaleLog, Church } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
@@ -27,9 +27,10 @@ export default async function DashboardPage() {
 
   const p = profile as Profile;
 
-  // Fetch in parallel: recent sales + total sale count + church name
+  // Fetch in parallel: recent sales (table) + all sales (chart) + total count + church
   const [
     { data: recentSales },
+    { data: chartSales },
     { count: salesCount },
     { data: churchData },
   ] = await Promise.all([
@@ -39,6 +40,11 @@ export default async function DashboardPage() {
       .eq("baker_id", user.id)
       .order("sold_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("sales_logs")
+      .select("loaves_count, amount_raised, sold_at")
+      .eq("baker_id", user.id)
+      .order("sold_at", { ascending: true }),
     supabase
       .from("sales_logs")
       .select("*", { count: "exact", head: true })
@@ -135,13 +141,14 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Personal stats */}
+      {/* Personal stats + trend chart */}
       <div>
         <h2 className="font-serif text-xl font-semibold mb-4">Your Stats</h2>
-        <StatsCards
+        <StatsSection
           loavesSold={p.loaves_sold}
           moneyRaised={Number(p.money_raised)}
           salesCount={salesCount ?? 0}
+          chartSales={chartSales ?? []}
         />
       </div>
 
