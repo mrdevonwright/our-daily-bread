@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Send } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,8 +22,42 @@ export function MannaChatBot() {
   const [messages, setMessages] = useState<Message[]>([OPENING_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load saved history for logged-in users
+  useEffect(() => {
+    async function loadHistory() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setHistoryLoaded(true);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/chat/history");
+        if (!res.ok) {
+          setHistoryLoaded(true);
+          return;
+        }
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          setMessages(data.messages as Message[]);
+        }
+      } catch {
+        // silently fall back to opening message
+      } finally {
+        setHistoryLoaded(true);
+      }
+    }
+
+    loadHistory();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +71,7 @@ export function MannaChatBot() {
     if (!text || isLoading) return;
 
     const userMessage: Message = { role: "user", content: text };
+    // Keep full in-memory history for anonymous context fallback
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput("");
@@ -45,7 +81,10 @@ export function MannaChatBot() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({
+          message: text,
+          messages: nextMessages, // used by server only for anonymous users
+        }),
       });
       const data = await res.json();
       if (data.reply) {
@@ -54,7 +93,6 @@ export function MannaChatBot() {
           { role: "assistant", content: data.reply },
         ]);
       }
-      // If Manna took an action that changed dashboard data, refresh the page
       if (data.needsRefresh) {
         router.refresh();
       }
@@ -83,7 +121,8 @@ export function MannaChatBot() {
     <>
       {/* Chat popup */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm flex flex-col rounded-2xl shadow-2xl border border-wheat/20 overflow-hidden bg-white"
+        <div
+          className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm flex flex-col rounded-2xl shadow-2xl border border-wheat/20 overflow-hidden bg-white"
           style={{ height: "480px" }}
         >
           {/* Header */}
@@ -94,7 +133,9 @@ export function MannaChatBot() {
               </div>
               <div>
                 <p className="font-semibold text-sm leading-tight">Manna</p>
-                <p className="text-xs text-white/80 leading-tight">Your bread ministry helper</p>
+                <p className="text-xs text-white/80 leading-tight">
+                  Your bread ministry helper
+                </p>
               </div>
             </div>
             <button
@@ -108,29 +149,46 @@ export function MannaChatBot() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-cream/40">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {msg.role === "assistant" && (
-                  <div className="w-6 h-6 rounded-full bg-wheat/20 flex items-center justify-center text-xs shrink-0 mr-2 mt-0.5">
-                    🌾
+            {/* Loading skeleton while history fetches */}
+            {!historyLoaded && (
+              <div className="flex justify-start">
+                <div className="w-6 h-6 rounded-full bg-wheat/20 flex items-center justify-center text-xs shrink-0 mr-2 mt-0.5">
+                  🌾
+                </div>
+                <div className="bg-white border border-wheat/10 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                  <div className="flex gap-1 items-center h-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-wheat/60 animate-bounce [animation-delay:0ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-wheat/60 animate-bounce [animation-delay:150ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-wheat/60 animate-bounce [animation-delay:300ms]" />
                   </div>
-                )}
-                <div
-                  className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-wheat text-white rounded-br-sm"
-                      : "bg-white text-foreground rounded-bl-sm shadow-sm border border-wheat/10"
-                  }`}
-                >
-                  {msg.content}
                 </div>
               </div>
-            ))}
+            )}
 
-            {/* Loading dots */}
+            {historyLoaded &&
+              messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="w-6 h-6 rounded-full bg-wheat/20 flex items-center justify-center text-xs shrink-0 mr-2 mt-0.5">
+                      🌾
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-wheat text-white rounded-br-sm"
+                        : "bg-white text-foreground rounded-bl-sm shadow-sm border border-wheat/10"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+
+            {/* Typing indicator */}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="w-6 h-6 rounded-full bg-wheat/20 flex items-center justify-center text-xs shrink-0 mr-2 mt-0.5">
@@ -158,12 +216,12 @@ export function MannaChatBot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask Manna anything…"
-                disabled={isLoading}
+                disabled={isLoading || !historyLoaded}
                 className="flex-1 text-sm bg-cream/60 border border-wheat/20 rounded-xl px-3.5 py-2.5 outline-none focus:border-wheat focus:ring-1 focus:ring-wheat/30 placeholder:text-muted-foreground/50 disabled:opacity-50 transition-colors"
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || !historyLoaded}
                 className="w-9 h-9 rounded-xl bg-wheat hover:bg-wheat-dark disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
                 aria-label="Send message"
               >
@@ -184,7 +242,6 @@ export function MannaChatBot() {
         <span className="text-sm font-semibold">
           {isOpen ? "Close" : "Ask Manna"}
         </span>
-        {/* pulse ring when closed */}
         {!isOpen && (
           <span className="absolute inset-0 rounded-full animate-ping bg-wheat/30 pointer-events-none" />
         )}

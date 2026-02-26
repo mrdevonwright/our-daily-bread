@@ -3,6 +3,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { LeaderboardClient } from "@/components/leaderboard/LeaderboardClient";
 import type { ChurchStats } from "@/components/leaderboard/LeaderboardClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Church Leaderboard",
   description: "See how every church in the Our Daily Bread movement is doing — loaves sold, money raised, and more.",

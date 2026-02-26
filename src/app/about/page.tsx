@@ -49,14 +49,16 @@ export default function AboutPage() {
             </p>
             <p>
               I felt compelled by God to share it. So I started giving loaves to
-              people at church. They loved it. Then a thought struck me: what if
-              I sold it? What if the entire congregation redirected their weekly
-              bread purchase — money they were already going to spend — to buy
-              from their own church family instead?
+              people at church. To my surprise, they really loved it! Enough that
+              a few of them even asked if I&apos;d bring some loaves to Sunday worship
+              so they could buy more. And then it hit me: What if the entire
+              congregation bought bread from our Church? People spend a lot on
+              bread... that could be a major source of revenue!
             </p>
             <p>
-              I ran a pilot. Six loaves. Sold out immediately. I made $56, donated
-              it to the church.
+              I ran a pilot. I brought 6 loaves on the first Sunday of Lent. They
+              sold out immediately. We made $56 and donated it all to the church.
+              6 loaves. $56.
             </p>
             <blockquote className="scripture">
               &ldquo;Whoever eats my flesh and drinks my blood remains in me, and I in them.&rdquo;
@@ -64,7 +66,7 @@ export default function AboutPage() {
               <span className="not-italic text-xs font-medium text-wheat/80">— John 6:56</span>
             </blockquote>
             <p>
-              The demand could have supported ten or twenty loaves. Then the bigger thought hit:
+              The demand was great! I had a small waiting list and people were really happy with the idea. Then the bigger thought hit:
             </p>
             <blockquote className="scripture text-lg">
               What if every Christian in America did this?
@@ -75,12 +77,12 @@ export default function AboutPage() {
               on bread every year. The average household spends{" "}
               <strong>${NATIONAL_BREAD_STATS.avg_household_annual_spend}/year</strong>. Nearly all of it
               flows to corporations and commercial bakeries. What if even a small
-              fraction flowed back to local churches instead?
+              fraction flowed back to local churches instead to fund their mission in Christ?
             </p>
             <p>
               With {NATIONAL_BREAD_STATS.us_christians_millions} million Christians
               and {NATIONAL_BREAD_STATS.us_churches_total.toLocaleString()} churches in America,
-              the potential is staggering. This is Our Daily Bread.
+              the potential is staggering. And so we are on a mission to bring this transformation to Church across America. This is Our Daily Bread.
             </p>
           </div>
         </div>

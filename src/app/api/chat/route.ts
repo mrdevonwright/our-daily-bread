@@ -8,12 +8,16 @@ import type { Profile } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["user", "assistant"]),
-      content: z.string(),
-    })
-  ),
+  message: z.string().min(1).max(4000),
+  // Full history passed by client for anonymous fallback only
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .optional(),
 });
 
 const SYSTEM_PROMPT = `You are Manna — a warm, wise, and encouraging AI assistant for Our Daily Bread (ourdailybread.club), a Christian ministry where church members bake and sell sourdough bread to fund their congregation.
@@ -519,14 +523,83 @@ function getClient() {
   return _client;
 }
 
+// ── Context consolidation ────────────────────────────────────────────────────
+
+const CONSOLIDATE_THRESHOLD = 80; // trigger when user/assistant messages exceed this
+const KEEP_RECENT = 60;           // always keep this many recent messages verbatim
+
+async function consolidateIfNeeded(userId: string): Promise<void> {
+  const admin = createAdminClient();
+
+  const { count } = await admin
+    .from("chat_messages")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .in("role", ["user", "assistant"]);
+
+  if (!count || count <= CONSOLIDATE_THRESHOLD) return;
+
+  const { data: allMessages } = await admin
+    .from("chat_messages")
+    .select("id, role, content")
+    .eq("user_id", userId)
+    .in("role", ["user", "assistant"])
+    .order("created_at", { ascending: true });
+
+  if (!allMessages || allMessages.length <= KEEP_RECENT) return;
+
+  const toSummarize = allMessages.slice(0, allMessages.length - KEEP_RECENT);
+  if (toSummarize.length === 0) return;
+
+  const convText = toSummarize
+    .map((m) => `${m.role === "user" ? "Baker" : "Manna"}: ${m.content}`)
+    .join("\n");
+
+  const summaryResponse = await getClient().messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 512,
+    messages: [
+      {
+        role: "user",
+        content: `Summarize this conversation between a baker and Manna (a bread ministry AI assistant) in 3–5 bullet points. Focus on: what the baker has been working on, any goals or challenges discussed, their bread ministry progress, and any personal context Manna should remember.\n\n${convText}`,
+      },
+    ],
+  });
+
+  const summary =
+    summaryResponse.content[0].type === "text"
+      ? summaryResponse.content[0].text
+      : "";
+
+  if (!summary) return;
+
+  // Replace old summary (if any) and delete the now-summarized messages
+  await admin
+    .from("chat_messages")
+    .delete()
+    .eq("user_id", userId)
+    .eq("role", "summary");
+
+  await admin.from("chat_messages").insert({
+    user_id: userId,
+    role: "summary",
+    content: summary,
+    // epoch so it always sorts before all real messages
+    created_at: new Date(0).toISOString(),
+  });
+
+  const idsToDelete = toSummarize.map((m) => m.id);
+  await admin.from("chat_messages").delete().in("id", idsToDelete);
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { messages } = schema.parse(body);
+    const { message, messages: anonMessages } = schema.parse(body);
 
-    // Identify logged-in user for tool use
+    // Identify logged-in user
     const supabase = await createClient();
     const {
       data: { user },
@@ -542,53 +615,74 @@ export async function POST(request: Request) {
       profile = data as Profile | null;
     }
 
-    // Anonymous users: text-only Manna
+    // ── Anonymous: text-only, stateless ──────────────────────────────────────
     if (!user || !profile) {
+      // Use the client-supplied history for context
+      const anonHistory = anonMessages ?? [];
       const response = await getClient().messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 512,
         system: SYSTEM_PROMPT,
-        messages,
+        messages: anonHistory,
       });
       const reply =
         response.content[0].type === "text" ? response.content[0].text : "";
       return NextResponse.json({ reply });
     }
 
-    // Authenticated: agentic loop with tools
-    const apiMessages: Anthropic.MessageParam[] = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // ── Authenticated: load history from DB ───────────────────────────────────
+    const admin = createAdminClient();
 
+    const { data: dbRows } = await admin
+      .from("chat_messages")
+      .select("role, content")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+
+    const summaryRow = dbRows?.find((r) => r.role === "summary");
+    const conversationRows =
+      dbRows?.filter((r) => r.role !== "summary") ?? [];
+
+    // Append summary to system prompt if one exists
+    let effectiveSystemPrompt = SYSTEM_PROMPT;
+    if (summaryRow) {
+      effectiveSystemPrompt +=
+        `\n\n---\n\nSUMMARY OF EARLIER CONVERSATIONS WITH THIS BAKER:\n${summaryRow.content}`;
+    }
+
+    // Build full message array for Anthropic: DB history + new user message
+    const apiMessages: Anthropic.MessageParam[] = [
+      ...conversationRows.map((r) => ({
+        role: r.role as "user" | "assistant",
+        content: r.content as string,
+      })),
+      { role: "user", content: message },
+    ];
+
+    // ── Agentic loop ──────────────────────────────────────────────────────────
     const MAX_ITERATIONS = 6;
     let needsRefresh = false;
+    let finalReply = "";
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const response = await getClient().messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
-        system: SYSTEM_PROMPT,
+        system: effectiveSystemPrompt,
         tools: TOOLS,
         messages: apiMessages,
       });
 
       if (response.stop_reason === "end_turn") {
         const textBlock = response.content.find((b) => b.type === "text");
-        const reply = textBlock?.type === "text" ? textBlock.text : "";
-        return NextResponse.json({ reply, needsRefresh });
+        finalReply = textBlock?.type === "text" ? textBlock.text : "";
+        break;
       }
 
       if (response.stop_reason === "tool_use") {
-        // Add assistant turn to history
-        apiMessages.push({
-          role: "assistant",
-          content: response.content,
-        });
+        apiMessages.push({ role: "assistant", content: response.content });
 
-        // Execute all tool calls
         const toolResults: Anthropic.ToolResultBlockParam[] = [];
-
         for (const block of response.content) {
           if (block.type === "tool_use") {
             if (block.name === "log_sale") needsRefresh = true;
@@ -605,25 +699,32 @@ export async function POST(request: Request) {
             });
           }
         }
-
-        // Add tool results as user turn and continue loop
-        apiMessages.push({
-          role: "user",
-          content: toolResults,
-        });
+        apiMessages.push({ role: "user", content: toolResults });
         continue;
       }
 
-      // Unexpected stop reason — return whatever text exists
+      // Unexpected stop reason
       const textBlock = response.content.find((b) => b.type === "text");
-      const reply = textBlock?.type === "text" ? textBlock.text : "";
-      return NextResponse.json({ reply, needsRefresh });
+      finalReply = textBlock?.type === "text" ? textBlock.text : "";
+      break;
     }
 
-    return NextResponse.json({
-      reply: "I got a little turned around — could you try again? 🙏",
-      needsRefresh,
-    });
+    if (!finalReply) {
+      finalReply = "I got a little turned around — could you try again? 🙏";
+    }
+
+    // ── Persist both turns to DB ──────────────────────────────────────────────
+    await admin.from("chat_messages").insert([
+      { user_id: user.id, role: "user", content: message },
+      { user_id: user.id, role: "assistant", content: finalReply },
+    ]);
+
+    // ── Consolidate in background if needed ───────────────────────────────────
+    consolidateIfNeeded(user.id).catch((err) =>
+      console.error("Manna consolidation error:", err)
+    );
+
+    return NextResponse.json({ reply: finalReply, needsRefresh });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });

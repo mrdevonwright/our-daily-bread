@@ -197,8 +197,8 @@ export const RECIPE_STEPS: RecipeStep[] = [
 
 export const SELLING_TIPS = [
   {
-    title: "Price with confidence",
-    tip: "Artisan sourdough at grocery stores costs $8–14. At $6–8 per loaf you are delivering superior value. Do not undersell your work.",
+    title: "No price — pay what you can",
+    tip: "Don't set a price. Jesus gave freely, and encouraged those with means to give generously. Let people decide with His teaching in their hearts. You'll be amazed — the freewill offering almost always exceeds what a fixed price would have.",
   },
   {
     title: "Bake Thursday or Friday",

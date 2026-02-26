@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Profile, Church } from "@/lib/types";
+import { Trash2 } from "lucide-react";
 
 interface SettingsFormProps {
   profile: Profile;
@@ -16,6 +17,8 @@ interface SettingsFormProps {
 export function SettingsForm({ profile, church }: SettingsFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [clearingManna, setClearingManna] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [values, setValues] = useState({
     full_name: profile.full_name ?? "",
     bio: profile.bio ?? "",
@@ -45,6 +48,24 @@ export function SettingsForm({ profile, church }: SettingsFormProps) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleClearManna() {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      return;
+    }
+    setClearingManna(true);
+    try {
+      const res = await fetch("/api/chat/clear", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to clear history");
+      toast.success("Manna history cleared.");
+      setConfirmClear(false);
+    } catch {
+      toast.error("Something went wrong clearing history.");
+    } finally {
+      setClearingManna(false);
     }
   }
 
@@ -150,6 +171,38 @@ export function SettingsForm({ profile, church }: SettingsFormProps) {
           <div className="text-sm bg-muted/40 border border-input rounded-xl px-3.5 py-2.5 text-muted-foreground capitalize">
             {profile.role.replace("_", " ")}
           </div>
+        </div>
+      </section>
+
+      {/* Manna AI */}
+      <section className="bg-white rounded-2xl border border-wheat/15 shadow-sm p-6 space-y-4">
+        <div>
+          <h2 className="font-serif text-lg font-semibold">Manna AI</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manna remembers your conversations so she can pick up where you left off.
+            Clear your history to start fresh.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={clearingManna}
+            onClick={handleClearManna}
+            onBlur={() => setConfirmClear(false)}
+            className={
+              confirmClear
+                ? "border-red-400 text-red-600 hover:bg-red-50"
+                : "border-wheat/30 text-muted-foreground hover:border-wheat/60"
+            }
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {clearingManna
+              ? "Clearing…"
+              : confirmClear
+                ? "Tap again to confirm"
+                : "Clear Manna History"}
+          </Button>
         </div>
       </section>
 
