@@ -97,27 +97,17 @@ export default async function BlogPage() {
       </section>
 
       {/* Internal posts */}
-      <section className="section-padding bg-wheat-texture">
-        <div className="max-w-6xl mx-auto">
-          {posts.length === 0 ? (
-            <div className="text-center py-16">
-              <span className="text-6xl block mb-4">🍞</span>
-              <h2 className="font-serif text-2xl font-bold mb-2">
-                Posts are on the way
-              </h2>
-              <p className="text-muted-foreground">
-                Check back soon for stories, recipes, and movement updates.
-              </p>
-            </div>
-          ) : (
+      {posts.length > 0 && (
+        <section className="section-padding bg-wheat-texture">
+          <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {posts.map((post) => (
                 <BlogCard key={post.id} post={post} />
               ))}
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* Substack feed */}
       {substackPosts.length > 0 && (
