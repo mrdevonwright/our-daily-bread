@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Wheat, Heart } from "lucide-react";
+import { Twitter } from "lucide-react";
 
 const FOOTER_LINKS = {
   Movement: [
@@ -76,6 +77,26 @@ export function Footer() {
           <p className="text-sm text-cream/50">
             © {currentYear} Our Daily Bread Movement. All rights reserved.
           </p>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://x.com/OurDailyBreadC"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-cream/50 hover:text-wheat transition-colors"
+              aria-label="Follow us on X"
+            >
+              <Twitter className="w-4 h-4" />
+            </a>
+            <a
+              href="https://substack.com/@ourdailybreadclub"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-cream/50 hover:text-wheat transition-colors text-sm font-medium"
+              aria-label="Read our Substack"
+            >
+              Substack
+            </a>
+          </div>
           <p className="text-sm text-cream/50 flex items-center gap-1">
             Made with <Heart className="w-3 h-3 text-wheat fill-wheat" /> and sourdough starter
           </p>

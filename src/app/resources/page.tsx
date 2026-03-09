@@ -39,6 +39,13 @@ const VENDOR_CATEGORIES = [
         cta: "Get the Kit →",
       },
       {
+        name: "Danish Dough Whisk (Etsy)",
+        tag: "Mixing tool",
+        note: "The easiest way to mix shaggy sourdough dough. The hook-shaped wire cuts through sticky flour effortlessly and barely needs washing — way better than a spoon or your hands.",
+        url: "https://www.etsy.com/listing/1535460399/13-danish-dough-whisk-for-sourdough",
+        cta: "Get the Whisk →",
+      },
+      {
         name: "Lodge Cast Iron",
         tag: "Dutch ovens",
         note: "A 5-qt Dutch oven is the secret to a perfect crust. You'll need two — one per loaf. Lodge's are affordable and last forever.",

@@ -25,6 +25,7 @@ Three roles: `baker`, `church_admin`, `super_admin`. Stored in `profiles.role` (
 
 - `src/middleware.ts` — protects all `/dashboard/*` routes server-side; redirects unauthenticated users to `/login?redirectTo=...`
 - After signup, users land on `/onboarding` to either create a church (becomes `church_admin`) or join one (becomes `baker`). Dashboard redirects back to `/onboarding` if `profile.role` or `profile.church_id` is missing.
+- Admins can also invite bakers directly via `/dashboard/members` → "Invite Baker". The invite link lands at `/join/[token]`; accepting sets `church_id` + `role=baker` on the user's profile.
 - Google OAuth is configured via Supabase. Callback handled at `/auth/callback`.
 
 ### Supabase Clients
@@ -61,6 +62,8 @@ This is already set on `src/app/page.tsx` and `src/app/api/churches/route.ts`. A
 | `/api/contact` | Contact form → saves to DB + Resend email to admin |
 | `/api/donate/checkout` | Create Stripe Checkout session |
 | `/api/donate/webhook` | Stripe webhook → sends thank-you email |
+| `/api/invitations` | Church admin sends invite email (POST); baker accepts via token (POST `/api/invitations/[token]`) |
+| `/api/members/[id]` | Church admin removes a baker from the church (DELETE; uses `createAdminClient` to bypass RLS) |
 | `/api/messages` | Church admin sends email to bakers via Resend |
 | `/api/sales` | Log a sale → updates `profiles` + `global_stats` via DB triggers |
 | `/api/stats` | Fetch `global_stats` row (30s cache) |
@@ -69,7 +72,7 @@ All POST routes validate input with Zod. Auth is verified server-side via `supab
 
 ### Database
 
-Key tables: `profiles`, `churches`, `sales_logs`, `global_stats` (single row, powers the live ticker), `blog_posts`, `contact_messages`, `story_submissions`.
+Key tables: `profiles`, `churches`, `sales_logs`, `global_stats` (single row, powers the live ticker), `blog_posts`, `contact_messages`, `story_submissions`, `invitations` (church admin invite links with 7-day expiry tokens).
 
 DB triggers auto-update `global_stats` and `profiles` aggregates when sales are logged — don't manually increment these counters.
 
@@ -102,7 +105,7 @@ Utility class patterns used throughout:
 
 ### Manna AI Chatbot
 
-`src/components/chat/MannaChatBot.tsx` — floating `"use client"` component mounted globally in `layout.tsx`. Sends full conversation history to `/api/chat` on each message. The system prompt and extended bread knowledge live entirely in `src/app/api/chat/route.ts`; `src/app/api/chat/manna-bread-knowledge.md` is a reference document used when updating that prompt. Uses `claude-haiku-4-5-20251001`. Requires `ANTHROPIC_API_KEY` env var.
+`src/components/chat/MannaChatBot.tsx` — floating `"use client"` component mounted globally in `layout.tsx`. Sends full conversation history to `/api/chat` on each message. The system prompt and extended bread knowledge live entirely in `src/app/api/chat/route.ts`; `src/app/api/chat/manna-bread-knowledge.md` is a reference document used when updating that prompt. Uses `claude-haiku-4-5-20251001`. `ANTHROPIC_API_KEY` is set in Vercel — Manna is live in production. Resend DNS is verified — transactional email sends from `hello@ourdailybread.club`.
 
 ### Real-time Ticker
 

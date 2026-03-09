@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfMonth } from "date-fns";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 type Metric = "loaves" | "money" | "avgSunday" | "avgPerLoaf";
@@ -115,11 +115,10 @@ export function StatsSection({
     loavesSold > 0 ? moneyRaised / loavesSold : 0;
 
   // "This month" totals computed from chartSales
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  const startOfMonthStr = startOfMonth.toISOString().slice(0, 10);
+  // Use date-fns startOfMonth + format to stay in local time (avoids UTC off-by-one-day bugs)
+  const startOfMonthStr = format(startOfMonth(new Date()), "yyyy-MM-dd");
   const thisMonthSales = chartSales.filter((s) => s.sold_at >= startOfMonthStr);
-  const thisMonthLoaves = thisMonthSales.reduce((sum, s) => sum + s.loaves_count, 0);
+  const thisMonthLoaves = thisMonthSales.reduce((sum, s) => sum + Number(s.loaves_count), 0);
   const thisMonthMoney = thisMonthSales.reduce((sum, s) => sum + Number(s.amount_raised), 0);
 
   const stats: { id: Metric; icon: typeof Wheat; label: string; value: string; sub: string }[] = [

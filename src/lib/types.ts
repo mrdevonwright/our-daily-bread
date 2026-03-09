@@ -180,3 +180,14 @@ export interface RecipeStep {
 export interface ChurchWithStats extends Church {
   baker_count?: number;
 }
+
+export interface Invitation {
+  id: string;
+  church_id: string;
+  email: string;
+  token: string;
+  invited_by: string;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+}
