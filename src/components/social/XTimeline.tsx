@@ -1,7 +1,6 @@
 "use client";
 
-import Script from "next/script";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
@@ -14,31 +13,37 @@ declare global {
 }
 
 export function XTimeline() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (window.twttr?.widgets) {
-      window.twttr.widgets.load();
+      // Script already loaded — just reinitialize
+      window.twttr.widgets.load(containerRef.current ?? undefined);
+      return;
     }
+
+    const script = document.createElement("script");
+    script.src = "https://platform.twitter.com/widgets.js";
+    script.async = true;
+    script.charset = "utf-8";
+    script.onload = () => {
+      window.twttr?.widgets.load(containerRef.current ?? undefined);
+    };
+    document.body.appendChild(script);
   }, []);
 
   return (
-    <div className="max-w-xl mx-auto rounded-2xl overflow-hidden border border-wheat/20">
+    <div ref={containerRef} className="max-w-xl mx-auto rounded-2xl border border-wheat/20 min-h-[400px]">
       <a
         className="twitter-timeline"
         data-theme="light"
         data-tweet-limit="6"
-        data-chrome="noheader nofooter noborders transparent"
+        data-chrome="noheader nofooter noborders"
         data-dnt="true"
         href="https://twitter.com/OurDailyBreadC"
       >
-        Posts from @OurDailyBreadC
+        Posts by @OurDailyBreadC
       </a>
-      <Script
-        src="https://platform.twitter.com/widgets.js"
-        strategy="afterInteractive"
-        onLoad={() => {
-          window.twttr?.widgets?.load();
-        }}
-      />
     </div>
   );
 }
