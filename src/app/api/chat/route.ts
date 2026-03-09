@@ -336,6 +336,7 @@ async function executeTool(
           };
         }
 
+        // Insert only — DB triggers handle updating profiles and global_stats
         const { error: insertError } = await admin.from("sales_logs").insert({
           baker_id: userId,
           church_id: profile.church_id,
@@ -346,34 +347,6 @@ async function executeTool(
         });
 
         if (insertError) return { success: false, error: insertError.message };
-
-        // Update profile aggregates
-        await admin
-          .from("profiles")
-          .update({
-            loaves_sold: profile.loaves_sold + loaves_count,
-            money_raised: Number(profile.money_raised) + amount_raised,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
-
-        // Update global stats
-        const { data: stats } = await admin
-          .from("global_stats")
-          .select("total_loaves, total_raised")
-          .eq("id", 1)
-          .single();
-
-        if (stats) {
-          await admin
-            .from("global_stats")
-            .update({
-              total_loaves: stats.total_loaves + loaves_count,
-              total_raised: Number(stats.total_raised) + amount_raised,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", 1);
-        }
 
         return { success: true, loaves_count, amount_raised, sold_at, notes };
       }
