@@ -50,7 +50,7 @@ export function LeaderboardClient({ churches }: { churches: ChurchStats[] }) {
   const [stateFilter, setStateFilter] = useState("all");
 
   const uniqueStates = useMemo(() => {
-    const states = [...new Set(churches.map((c) => c.state))].sort();
+    const states = Array.from(new Set(churches.map((c) => c.state))).sort();
     return states;
   }, [churches]);
 

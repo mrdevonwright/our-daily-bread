@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import type { StorySubmission } from "@/lib/types";
 import StoryForm from "./StoryForm";
+import { XTimeline } from "@/components/social/XTimeline";
 
 export const metadata: Metadata = {
   title: "Stories",
@@ -61,14 +62,16 @@ export default async function SocialPage() {
             share your loaves and stories on X (Twitter) and Instagram.
           </p>
 
-          {/* Static X post embed — replace with real post URL */}
-          <div className="max-w-xl mx-auto bg-cream border border-wheat/20 rounded-2xl p-8 text-center">
-            <p className="text-muted-foreground text-sm mb-3">
-              Social feed coming soon — follow us and tag your loaves!
-            </p>
-            <p className="font-serif text-xl font-bold text-wheat">
-              #OurDailyBreadMovement
-            </p>
+          <XTimeline />
+          <div className="mt-6 text-center">
+            <a
+              href="https://x.com/OurDailyBreadC"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-wheat hover:underline font-medium"
+            >
+              Follow @OurDailyBreadC on X →
+            </a>
           </div>
         </div>
       </section>
